@@ -1,0 +1,47 @@
+{
+  "name": "@azerion/cordova-google-play-services",
+  "version": "0.0.7",
+  "description": "Cordova wrapper fo Google Play Services",
+  "cordova": {
+    "id": "cordova-google-play-services",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": "git@github.com:azerion/cordova-google-play-servcies.git",
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Azerion",
+  "contributors": [
+    {
+      "name": "Ale Bles",
+      "email": "a.bles@azerion.com"
+    }
+  ],
+  "license": "MIT",
+  "bugs": "https://github.com/azerion/cordova-google-play-servcies/issues",
+  "homepage": "https://github.com/azerion/cordova-google-play-servcies#README.md",
+  "scripts": {
+    "build": "rollup -c rollup.config.ts",
+    "start": "rollup -c rollup.config.ts -w"
+  },
+  "devDependencies": {
+    "@azerion/h5-ad-wrapper": "^0.2.1-alpha.1",
+    "@types/cordova": "0.0.34",
+    "rollup": "^0.67.0",
+    "rollup-plugin-commonjs": "^9.1.8",
+    "rollup-plugin-json": "^3.1.0",
+    "rollup-plugin-livereload": "^1.0.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "rollup-plugin-serve": "^1.0.1",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-typescript2": "^0.19.3",
+    "typescript": "^3.3.4000"
+  },
+  "dependencies": {
+    "@types/es6-promise": "^3.3.0",
+    "eventemitter3": "^3.1.0"
+  }
+}

@@ -1,0 +1,49 @@
+<?xml version='1.1' encoding='utf-8'?>
+<plugin id="@azerion/cordova-google-play-services" version="0.1.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <name>Cordova Google Play Services</name>
+
+    <keywords>cordova,Social,google,play,games,game,center,achievements,leaderboards</keywords>
+
+    <repo>git@github.com:azerion/cordova-google-play-servcies.git</repo>
+    <issue>http://github.com/azerion/cordova-google-play-servcies/issues</issue>
+
+    <dependency id="es6-promise-plugin" version="^4.2.2" />
+
+    <js-module name="hlSdk" src="www/hlSdk.js">
+        <clobbers target="window.HlSdk"/>
+    </js-module>
+
+    <platform name="android">
+        <preference name="APP_ID" />
+
+        <config-file parent="/*" target="config.xml">
+            <feature name="HlSdkCordova">
+                <param name="android-package" value="com.azerion.cordova.plugin.HlSdkCordova"/>
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            // Required permissions
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+            // Tell google which app id we use for Google Play
+            <meta-data
+                    android:name="com.google.android.gms.games.APP_ID"
+                    android:value="@string/app_id" />
+        </config-file>
+
+        <config-file target="app/src/main/res/values/strings.xml" parent="/resources">
+            <string name="app_id">$APP_ID</string>
+        </config-file>
+
+        //Our cordova wrapper
+        <source-file src="src/android/src/HlSdkCordova.java" target-dir="src/com/azerion/cordova/plugin"/>
+        <source-file src="src/android/src/AdType.java" target-dir="src/com/azerion/cordova/plugin"/>
+        <source-file src="src/android/src/AdEvents.java" target-dir="src/com/azerion/cordova/plugin"/>
+
+        <framework src="com.android.support:appcompat-v7:27.0.0" />
+        <framework src="com.google.android.gms:play-services-plus:^16.0.0" />
+        <framework src="com.google.android.gms:play-services:^17.0.0" />
+    </platform>
+</plugin>
