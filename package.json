@@ -1,9 +1,9 @@
 {
-  "name": "@azerion/cordova-google-play-services",
+  "name": "cordova-plugin-google-play-services",
   "version": "0.0.7",
   "description": "Cordova wrapper fo Google Play Services",
   "cordova": {
-    "id": "cordova-google-play-services",
+    "id": "cordova-plugin-google-play-services",
     "platforms": [
       "android"
     ]
@@ -41,7 +41,6 @@
     "typescript": "^3.3.4000"
   },
   "dependencies": {
-    "@types/es6-promise": "^3.3.0",
     "eventemitter3": "^3.1.0"
   }
 }

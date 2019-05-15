@@ -26,9 +26,12 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaWebView;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.support.annotation.NonNull;
 
 /**
  * Simple Cordova plugin for google play services games
@@ -41,16 +44,16 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     private LeaderboardsClient leaderboardsClient;
     private EventsClient eventsClient;
     private PlayersClient playersClient;
+    private GoogleSignInClient googleSignInClient;
 
-    private String displayName;
+    private String displayName = "???";
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
-        connectionCallbackContext = null;
 
         // Create the client used to sign in to Google services.
-        googleSignInClient = GoogleSignIn.getClient(this, new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build());
+        googleSignInClient = GoogleSignIn.getClient(cordova.getActivity(), new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build());
     }
 
     /**
@@ -58,19 +61,55 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
      */
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-    
+        JSONObject options;
+        try {
+          options = args.getJSONObject(0);
+        } catch (JSONException e) {
+          callbackContext.error("Error encountered: " + e.getMessage());
+          return false;
+        }
+
+        if ("login".equals(action)) {
+            signin(callbackContext);
+            return true;
+        } else if ("submitScore".equals(action)) {
+
+        } else if ("unlockAchievement".equals(action)) {
+          
+        } else if ("showLeaderboard".equals(action)) {
+          
+        } else if ("showAchievements".equals(action)) {
+          
+        } else if ("getDisplayName".equals(action)) {
+          PluginResult result = new PluginResult(PluginResult.Status.OK, displayName);           
+          callbackContext.sendPluginResult(result);
+          return true;
+        }
+
+        return false;
     }
 
-    private void signin() {
-        googleSignInClient.silentSignIn().addOnCompleteListener(this,
+    private void sendResult(Boolean success, CallbackContext callbackContext) {
+        PluginResult result;
+        if (success) {
+            result = new PluginResult(PluginResult.Status.OK);    
+        } else {
+            result = new PluginResult(PluginResult.Status.ERROR);
+        }
+        
+        callbackContext.sendPluginResult(result);
+    }
+
+    private void signin(CallbackContext callbackContext) {
+        googleSignInClient.silentSignIn().addOnCompleteListener(cordova.getActivity(),
         new OnCompleteListener<GoogleSignInAccount>() {
           @Override
           public void onComplete(@NonNull Task<GoogleSignInAccount> task) {
             if (task.isSuccessful()) {
-              Log.d(TAG, "signInSilently(): success");
+              sendResult(true, callbackContext);
               onConnected(task.getResult());
             } else {
-              Log.d(TAG, "signInSilently(): failure", task.getException());
+              sendResult(false, callbackContext);              
               onDisconnected();
             }
           }
@@ -78,10 +117,10 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     }
 
     private void onConnected(GoogleSignInAccount googleSignInAccount) {   
-        achievementsClient = Games.getAchievementsClient(this, googleSignInAccount);
-        leaderboardsClient = Games.getLeaderboardsClient(this, googleSignInAccount);
-        eventsClient = Games.getEventsClient(this, googleSignInAccount);
-        playersClient = Games.getPlayersClient(this, googleSignInAccount);
+        achievementsClient = Games.getAchievementsClient(cordova.getActivity(), googleSignInAccount);
+        leaderboardsClient = Games.getLeaderboardsClient(cordova.getActivity(), googleSignInAccount);
+        eventsClient = Games.getEventsClient(cordova.getActivity(), googleSignInAccount);
+        playersClient = Games.getPlayersClient(cordova.getActivity(), googleSignInAccount);
     
         // Show sign-out button on main menu
         // mMainMenuFragment.setShowSignInButton(false);
@@ -98,8 +137,6 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
                 if (task.isSuccessful()) {
                   displayName = task.getResult().getDisplayName();
                 } else {
-                  Exception e = task.getException();
-                  handleException(e, getString(R.string.players_exception));
                   displayName = "???";
               }
             }
@@ -107,13 +144,11 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     
     
         // if we have accomplishments to push, push them
-        if (!mOutbox.isEmpty()) {
-          pushAccomplishments();
-          Toast.makeText(this, getString(R.string.your_progress_will_be_uploaded),
-              Toast.LENGTH_LONG).show();
-        }
-    
-        loadAndPrintEvents();
+        // if (!mOutbox.isEmpty()) {
+        //   pushAccomplishments();
+        //   Toast.makeText(this, getString(R.string.your_progress_will_be_uploaded),
+        //       Toast.LENGTH_LONG).show();
+        // }
     }
 
     private void onDisconnected() {    

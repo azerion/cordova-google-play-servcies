@@ -48,7 +48,7 @@ class GooglePlayServices extends EventEmitter {
         });
     }
 }
-
+(window as any).GooglePlayServices = GooglePlayServices;
 export namespace Azerion {
     export const playServices = new GooglePlayServices();
 }
