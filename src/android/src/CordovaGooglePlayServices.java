@@ -1,4 +1,4 @@
-package com.azerion.cordova.plugin.googleplay;
+package com.azerion.cordova.plugin;
 
 //Google Play Services for Games
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -32,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.support.annotation.NonNull;
+import android.content.Intent;
 
 /**
  * Simple Cordova plugin for google play services games
@@ -45,8 +46,12 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     private EventsClient eventsClient;
     private PlayersClient playersClient;
     private GoogleSignInClient googleSignInClient;
+    private CallbackContext callback;
 
     private String displayName = "???";
+
+    private static final int RC_UNUSED = 5001;
+    private static final int RC_SIGN_IN = 9001;  
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -62,15 +67,18 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         JSONObject options;
-        try {
-          options = args.getJSONObject(0);
-        } catch (JSONException e) {
-          callbackContext.error("Error encountered: " + e.getMessage());
-          return false;
+        if (args.length() > 0) {
+          try {
+              options = args.getJSONObject(0);
+          } catch (JSONException e) {
+              callbackContext.error("Error encountered: " + e.getMessage());
+              return false;
+          }
         }
 
         if ("login".equals(action)) {
-            signin(callbackContext);
+            callback = callbackContext;
+            startSignInIntent();
             return true;
         } else if ("submitScore".equals(action)) {
 
@@ -89,6 +97,19 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
         return false;
     }
 
+    @Override
+    public void onPause(boolean multitasking) {
+        super.onPause(multitasking);
+    }
+
+    @Override
+    public void onResume(boolean multitasking) {
+        super.onResume(multitasking);
+
+        silentlySignin();
+    }
+
+
     private void sendResult(Boolean success, CallbackContext callbackContext) {
         PluginResult result;
         if (success) {
@@ -100,16 +121,42 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
         callbackContext.sendPluginResult(result);
     }
 
-    private void signin(CallbackContext callbackContext) {
+    private void startSignInIntent() {
+      cordova.setActivityResultCallback(this); 
+
+      cordova.startActivityForResult(this, googleSignInClient.getSignInIntent(), RC_SIGN_IN);
+    }
+  
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) 
+    {
+      if (requestCode == RC_SIGN_IN) {
+        Task<GoogleSignInAccount> task =
+            GoogleSignIn.getSignedInAccountFromIntent(data);
+  
+        try {
+          GoogleSignInAccount account = task.getResult(ApiException.class);
+          onConnected(account);
+        } catch (ApiException apiException) {
+          String message = apiException.getMessage();
+          if (message == null || message.isEmpty()) {
+            message = "sig-in failed";
+          }
+  
+          onDisconnected();
+        }
+      }
+  
+    }
+
+    private void silentlySignin(.0) {
         googleSignInClient.silentSignIn().addOnCompleteListener(cordova.getActivity(),
         new OnCompleteListener<GoogleSignInAccount>() {
           @Override
           public void onComplete(@NonNull Task<GoogleSignInAccount> task) {
             if (task.isSuccessful()) {
-              sendResult(true, callbackContext);
               onConnected(task.getResult());
-            } else {
-              sendResult(false, callbackContext);              
+            } else {           
               onDisconnected();
             }
           }
@@ -133,7 +180,6 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
             .addOnCompleteListener(new OnCompleteListener<Player>() {
               @Override
               public void onComplete(@NonNull Task<Player> task) {
-                String displayName;
                 if (task.isSuccessful()) {
                   displayName = task.getResult().getDisplayName();
                 } else {

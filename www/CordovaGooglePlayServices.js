@@ -1,5 +1,3 @@
-
-(function(l, i, v, e) { v = l.createElement(i); v.async = 1; v.src = '//' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; e = l.getElementsByTagName(i)[0]; e.parentNode.insertBefore(v, e)})(document, 'script');
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -404,9 +402,19 @@
         GooglePlayServices.prototype.showAchievements = function () {
             return this.promisfyCordovaCall('CordovaGooglePlayServices', 'showAchievements');
         };
+        GooglePlayServices.prototype.getPlayerName = function () {
+            return this.promisfyCordovaCall('CordovaGooglePlayServices', 'getDisplayName');
+        };
         GooglePlayServices.prototype.promisfyCordovaCall = function (service, action, data) {
+            console.log('setting up new promis!', service, action, data);
             return new Promise(function (resolve, reject) {
-                cordova.exec(function (result) { return resolve(result); }, function (error) { return reject(error); }, service, action, data);
+                cordova.exec(function (result) {
+                    console.log('cordova result', result);
+                    resolve(result);
+                }, function (error) {
+                    console.log('cordova error', error);
+                    reject(error);
+                }, service, action, data);
             });
         };
         return GooglePlayServices;
@@ -414,6 +422,7 @@
     (function (Azerion) {
         Azerion.playServices = new GooglePlayServices();
     })(exports.Azerion || (exports.Azerion = {}));
+    window.cpgps = exports.Azerion.playServices;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

@@ -1,6 +1,6 @@
 <?xml version='1.1' encoding='utf-8'?>
 <plugin id="cordova-plugin-google-play-services" version="0.1.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
-    <name>Cordova Google Play Services</name>
+    <name>Google Play Services for Cordova</name>
 
     <keywords>cordova,Social,google,play,games,game,center,achievements,leaderboards</keywords>
 
@@ -18,7 +18,7 @@
 
         <config-file parent="/*" target="config.xml">
             <feature name="CordovaGooglePlayServices">
-                <param name="android-package" value="com.azerion.cordova.plugin.googleplay"/>
+                <param name="android-package" value="com.azerion.cordova.plugin.CordovaGooglePlayServices"/>
             </feature>
         </config-file>
 

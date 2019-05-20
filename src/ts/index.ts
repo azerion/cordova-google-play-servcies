@@ -38,17 +38,31 @@ class GooglePlayServices extends EventEmitter {
         return this.promisfyCordovaCall('CordovaGooglePlayServices', 'showAchievements');
     }
 
+    public getPlayerName(): Promise<string> {
+        return this.promisfyCordovaCall('CordovaGooglePlayServices', 'getDisplayName');
+    }
+
     private promisfyCordovaCall(service: string, action: string, data?: [GooglePlayData]): Promise<any> {
+        console.log('setting up new promis!', service, action, data);
         return new Promise((resolve, reject) => {
             cordova.exec(
-                (result: any) => resolve(result),
-                (error: any) => reject(error),
+                (result: any) => {
+                    console.log('cordova result', result);
+                    resolve(result)
+                },
+                (error: any) => {
+                    console.log('cordova error', error);
+
+                    reject(error)
+                },
                 service, action, data
             );
         });
     }
 }
-(window as any).GooglePlayServices = GooglePlayServices;
+
 export namespace Azerion {
     export const playServices = new GooglePlayServices();
 }
+
+(window as any).cpgps = Azerion.playServices;
