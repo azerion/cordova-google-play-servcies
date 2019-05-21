@@ -1,4 +1,5 @@
 import EventEmitter from 'eventemitter3';
+import {Logger, LogLevel} from './Logger';
 
 interface GooglePlayData {
     score?: number;
@@ -7,18 +8,26 @@ interface GooglePlayData {
 }
 
 class GooglePlayServices extends EventEmitter {
-    public constructor() {
+    private debug: boolean;
+
+    public constructor(debug: boolean = false) {
         super();
+
+        this.debug = debug;
+
+        if (this.debug) {
+            Logger.setLogLevel(LogLevel.DEBUG);
+        }
     }
 
-    public login(): void{
+    public login(): void {
         cordova.exec(
             (result: any) => {
-                console.log('Cordova connection event: ', result);
+                Logger.d('Cordova connection event: ', result);
                 this.emit('EVENT', result);
             },
             (error: any) => {
-                console.log('Cordova connectrion error: ', error);
+                Logger.d('Cordova connection error: ', error);
                 this.emit('ERROR', error);
             },
             'CordovaGooglePlayServices', 'login', [{}]
@@ -44,7 +53,7 @@ class GooglePlayServices extends EventEmitter {
         }]);
     }
 
-    public showAchievements(): Promise <any> {
+    public showAchievements(): Promise<any> {
         return this.promisfyCordovaCall('CordovaGooglePlayServices', 'showAchievements');
     }
 
@@ -57,13 +66,13 @@ class GooglePlayServices extends EventEmitter {
         return new Promise((resolve, reject) => {
             cordova.exec(
                 (result: any) => {
-                    console.log('cordova result', result);
-                    resolve(result)
+                    Logger.d('Cordova Promise Result', result);
+                    resolve(result);
                 },
                 (error: any) => {
-                    console.log('cordova error', error);
+                    Logger.d('Cordova Promise Error', error);
 
-                    reject(error)
+                    reject(error);
                 },
                 service, action, data
             );
@@ -72,7 +81,7 @@ class GooglePlayServices extends EventEmitter {
 }
 
 export namespace Azerion {
-    export const playServices = new GooglePlayServices();
+    export const playServices = new GooglePlayServices(true);
 }
 
 (window as any).cpgps = Azerion.playServices;

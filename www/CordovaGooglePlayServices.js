@@ -375,18 +375,116 @@
     }
     });
 
+    var LogLevel;
+    (function (LogLevel) {
+        LogLevel[LogLevel["DEBUG"] = 0] = "DEBUG";
+        LogLevel[LogLevel["INFO"] = 1] = "INFO";
+        LogLevel[LogLevel["WARN"] = 2] = "WARN";
+        LogLevel[LogLevel["ERROR"] = 3] = "ERROR";
+    })(LogLevel || (LogLevel = {}));
+    /**
+     * Logger class with a similar API to Cordova Android log
+     * see https://github.com/apache/cordova-android/blob/master/framework/src/org/apache/cordova/LOG.java
+     */
+    var Logger = /** @class */ (function () {
+        function Logger() {
+        }
+        /**
+         * Set the visible log level
+         *
+         * @param level LogLevel
+         */
+        Logger.setLogLevel = function (level) {
+            this.level = level;
+        };
+        /**
+         * Debug logging
+         *
+         * @param data
+         */
+        Logger.d = function () {
+            var data = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                data[_i] = arguments[_i];
+            }
+            if (LogLevel.DEBUG >= Logger.level) {
+                Logger.log(LogLevel.DEBUG, data);
+            }
+        };
+        /**
+         * Default INFO logging
+         *
+         * @param data
+         */
+        Logger.i = function () {
+            var data = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                data[_i] = arguments[_i];
+            }
+            if (LogLevel.INFO >= Logger.level) {
+                Logger.log(LogLevel.INFO, data);
+            }
+        };
+        /**
+         * warning Logging
+         *
+         * @param data
+         */
+        Logger.w = function () {
+            var data = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                data[_i] = arguments[_i];
+            }
+            if (LogLevel.WARN >= Logger.level) {
+                Logger.log(LogLevel.WARN, data);
+            }
+        };
+        /**
+         * Error Loggin
+         *
+         * @param data
+         */
+        Logger.e = function () {
+            var data = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                data[_i] = arguments[_i];
+            }
+            if (LogLevel.ERROR >= Logger.level) {
+                Logger.log(LogLevel.ERROR, data);
+            }
+        };
+        Logger.log = function (level, data) {
+            console.log([
+                '[' + ((Date.now() - Logger.started) / 1000) + 's] CordovaGooglePlay | ' + LogLevel[level] + ' | '
+            ].concat(data));
+            // @ts-ignore
+            console.log.apply(console, [
+                '[' + ((Date.now() - Logger.started) / 1000) + 's] CordovaGooglePlay | ' + LogLevel[level] + ' | '
+            ].concat(data));
+        };
+        Logger.started = Date.now();
+        Logger.level = LogLevel.INFO;
+        return Logger;
+    }());
+
     var GooglePlayServices = /** @class */ (function (_super) {
         __extends(GooglePlayServices, _super);
-        function GooglePlayServices() {
-            return _super.call(this) || this;
+        function GooglePlayServices(debug) {
+            if (debug === void 0) { debug = false; }
+            var _this = _super.call(this) || this;
+            _this.debug = debug;
+            if (_this.debug) {
+                Logger.setLogLevel(LogLevel.DEBUG);
+            }
+            return _this;
         }
         GooglePlayServices.prototype.login = function () {
             var _this = this;
             cordova.exec(function (result) {
-                console.log('Cordova connection event: ', result);
+                Logger.d('Cordova connection event: ', result);
                 _this.emit('EVENT', result);
             }, function (error) {
-                console.log('Cordova connectrion error: ', error);
+                Logger.d('Cordova connection error: ', error);
                 _this.emit('ERROR', error);
             }, 'CordovaGooglePlayServices', 'login', [{}]);
         };
@@ -417,10 +515,10 @@
             console.log('setting up new promis!', service, action, data);
             return new Promise(function (resolve, reject) {
                 cordova.exec(function (result) {
-                    console.log('cordova result', result);
+                    Logger.d('Cordova Promise Result', result);
                     resolve(result);
                 }, function (error) {
-                    console.log('cordova error', error);
+                    Logger.d('Cordova Promise Error', error);
                     reject(error);
                 }, service, action, data);
             });
@@ -428,7 +526,7 @@
         return GooglePlayServices;
     }(eventemitter3));
     (function (Azerion) {
-        Azerion.playServices = new GooglePlayServices();
+        Azerion.playServices = new GooglePlayServices(true);
     })(exports.Azerion || (exports.Azerion = {}));
     window.cpgps = exports.Azerion.playServices;
 
