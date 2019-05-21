@@ -488,6 +488,11 @@
                 _this.emit('ERROR', error);
             }, 'CordovaGooglePlayServices', 'login', [{}]);
         };
+        GooglePlayServices.prototype.isSignedIn = function () {
+            return this.promisfyCordovaCall('CordovaGooglePlayServices', 'isSignedIn').then(function (result) {
+                return result === "true";
+            });
+        };
         GooglePlayServices.prototype.submitScore = function (leaderBoardId, score) {
             return this.promisfyCordovaCall('CordovaGooglePlayServices', 'submitScore', [{
                     leaderBoardId: leaderBoardId,

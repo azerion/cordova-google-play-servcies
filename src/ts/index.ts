@@ -34,6 +34,12 @@ class GooglePlayServices extends EventEmitter {
         );
     }
 
+    public isSignedIn(): Promise<boolean> {
+        return this.promisfyCordovaCall('CordovaGooglePlayServices', 'isSignedIn').then((result: string) => {
+            return result === "true";
+        });
+    }
+
     public submitScore(leaderBoardId: string, score: number): Promise<any> {
         return this.promisfyCordovaCall('CordovaGooglePlayServices', 'submitScore', [{
             leaderBoardId: leaderBoardId,

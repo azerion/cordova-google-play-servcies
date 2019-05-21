@@ -41,7 +41,6 @@ import android.content.Intent;
  * https://github.com/playgameservices/android-basic-samples/blob/master/TypeANumber/src/main/java/com/google/example/games/tanc/MainActivity.java
  */
 public class CordovaGooglePlayServices extends CordovaPlugin {
-
     private AchievementsClient achievementsClient;
     private LeaderboardsClient leaderboardsClient;
     private EventsClient eventsClient;
@@ -50,7 +49,7 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     private CallbackContext connectionCallbackContext;
 
     private String displayName = "???";
-    private boolean signedIn = false;
+    private Boolean signedIn = false;
 
     private static final int RC_UNUSED = 5001;
     private static final int RC_SIGN_IN = 9001;
@@ -61,6 +60,7 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
 
+        connectionCallbackContext = null;
         // Create the client used to sign in to Google services.
         googleSignInClient = GoogleSignIn.getClient(cordova.getActivity(),
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build());
@@ -81,8 +81,7 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
         }
 
         if ("login".equals(action)) {
-            connectionCallbackContext = callbackContext;
-            startSignInIntent();
+            startSignInIntent(callbackContext);
             return true;
         } else if ("submitScore".equals(action)) {
             onSubmitScore(options.getString("leaderBoardId"), options.getInt("score"), callbackContext);
@@ -96,6 +95,10 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
         } else if ("showAchievements".equals(action)) {
             onShowAchievementsRequested(callbackContext);
             return true;
+        } else if ("isSignedIn".equals(action)) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, signedIn.toString());
+            callbackContext.sendPluginResult(result);
+            return true;
         } else if ("getDisplayName".equals(action)) {
             PluginResult result = new PluginResult(PluginResult.Status.OK, displayName);
             callbackContext.sendPluginResult(result);
@@ -103,6 +106,15 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
         }
 
         return false;
+    }
+
+    @Override
+    public void onStart() {
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(cordova.getActivity());
+        if (null != account) {
+            LOG.d(LOG_TAG, "Existing acount signed in before, setting up");
+            onConnected(account);
+        }
     }
 
     private void sendResult(Boolean success, String message, CallbackContext callbackContext) {
@@ -120,7 +132,8 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     /**
      * Simple sign-in with UI to notify user which account to use
      */
-    private void startSignInIntent() {
+    private void startSignInIntent(CallbackContext callbackContext) {
+        connectionCallbackContext = callbackContext;
         LOG.d(LOG_TAG, "Starting Play Services signin intent");
         cordova.setActivityResultCallback(this);
         cordova.startActivityForResult(this, googleSignInClient.getSignInIntent(), RC_SIGN_IN);
@@ -178,7 +191,9 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
             public void onComplete(@NonNull Task<Player> task) {
                 if (task.isSuccessful()) {
                     displayName = task.getResult().getDisplayName();
-                    sendResult(true, "GOOGLE_PLAYERNAME_RECEIVED", connectionCallbackContext);
+                    if (null != connectionCallbackContext) {
+                        sendResult(true, "GOOGLE_PLAYERNAME_RECEIVED", connectionCallbackContext);
+                    }
                 } else {
                     displayName = "???";
                 }
@@ -196,8 +211,7 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     public void onShowAchievementsRequested(CallbackContext callbackContext) {
         if (!signedIn) {
             LOG.d(LOG_TAG, "Opened Achievements when not signed in, signing in instead.");
-            connectionCallbackContext = callbackContext;
-            startSignInIntent();
+            startSignInIntent(callbackContext);
             return;
         }
 
@@ -218,8 +232,7 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     public void onShowLeaderboardsRequested(CallbackContext callbackContext) {
         if (!signedIn) {
             LOG.d(LOG_TAG, "Opened leaderboard when not signed in, signing in instead.");
-            connectionCallbackContext = callbackContext;
-            startSignInIntent();
+            startSignInIntent(callbackContext);
             return;
         }
 
