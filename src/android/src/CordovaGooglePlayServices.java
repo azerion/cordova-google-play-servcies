@@ -46,12 +46,14 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     private EventsClient eventsClient;
     private PlayersClient playersClient;
     private GoogleSignInClient googleSignInClient;
-    private CallbackContext callback;
+    private CallbackContext connectionCallbackContext;
 
     private String displayName = "???";
+    private boolean signedIn = false;
 
     private static final int RC_UNUSED = 5001;
-    private static final int RC_SIGN_IN = 9001;  
+    private static final int RC_SIGN_IN = 9001;
+    private static final int RC_LEADERBOARD_UI = 9004;  
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -67,27 +69,29 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         JSONObject options;
-        if (args.length() > 0) {
-          try {
-              options = args.getJSONObject(0);
-          } catch (JSONException e) {
-              callbackContext.error("Error encountered: " + e.getMessage());
-              return false;
-          }
+        try {
+            options = args.getJSONObject(0);
+        } catch (JSONException e) {
+            callbackContext.error("Error encountered: " + e.getMessage());
+            return false;
         }
 
         if ("login".equals(action)) {
-            callback = callbackContext;
+            connectionCallbackContext = callbackContext;
             startSignInIntent();
             return true;
         } else if ("submitScore".equals(action)) {
-
+          onSubmitScore(options.getString("leaderBoardId"), options.getInt("score"), callbackContext);
+          return true;        
         } else if ("unlockAchievement".equals(action)) {
-          
+          onUnlockAchievement(options.getString("achievementId"), callbackContext);
+          return true;
         } else if ("showLeaderboard".equals(action)) {
-          
+          onShowLeaderboardsRequested(callbackContext);
+          return true;
         } else if ("showAchievements".equals(action)) {
-          
+          onShowAchievementsRequested(callbackContext);
+          return true;
         } else if ("getDisplayName".equals(action)) {
           PluginResult result = new PluginResult(PluginResult.Status.OK, displayName);           
           callbackContext.sendPluginResult(result);
@@ -97,33 +101,22 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
         return false;
     }
 
-    @Override
-    public void onPause(boolean multitasking) {
-        super.onPause(multitasking);
-    }
-
-    @Override
-    public void onResume(boolean multitasking) {
-        super.onResume(multitasking);
-
-        silentlySignin();
-    }
-
-
-    private void sendResult(Boolean success, CallbackContext callbackContext) {
+    private void sendResult(Boolean success, String message, CallbackContext callbackContext) {
         PluginResult result;
         if (success) {
-            result = new PluginResult(PluginResult.Status.OK);    
+            result = new PluginResult(PluginResult.Status.OK, message);    
         } else {
-            result = new PluginResult(PluginResult.Status.ERROR);
+            result = new PluginResult(PluginResult.Status.ERROR, message);
         }
-        
+        result.setKeepCallback(true);
         callbackContext.sendPluginResult(result);
     }
 
+    /**
+     * Simple sign-in with UI to notify user which account to use
+     */
     private void startSignInIntent() {
       cordova.setActivityResultCallback(this); 
-
       cordova.startActivityForResult(this, googleSignInClient.getSignInIntent(), RC_SIGN_IN);
     }
   
@@ -136,28 +129,32 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
   
         try {
           GoogleSignInAccount account = task.getResult(ApiException.class);
+          sendResult(true, "GOOGLE_SIGNED_IN", connectionCallbackContext); 
           onConnected(account);
         } catch (ApiException apiException) {
           String message = apiException.getMessage();
           if (message == null || message.isEmpty()) {
-            message = "sig-in failed";
+            message = "GOOGLE_SIGNIN_FAIL";
           }
-  
+          sendResult(false, message, connectionCallbackContext); 
           onDisconnected();
         }
       }
   
     }
 
-    private void silentlySignin(.0) {
+    private void silentlySignin() {
         googleSignInClient.silentSignIn().addOnCompleteListener(cordova.getActivity(),
         new OnCompleteListener<GoogleSignInAccount>() {
           @Override
           public void onComplete(@NonNull Task<GoogleSignInAccount> task) {
             if (task.isSuccessful()) {
               onConnected(task.getResult());
+              sendResult(true, "GOOGLE_SILENT_SIGNED_IN", connectionCallbackContext); 
             } else {           
               onDisconnected();
+              signedIn = false;
+              sendResult(true, "GOOGLE_SILENT_SIGNIN_FAILED", connectionCallbackContext); 
             }
           }
         });
@@ -166,14 +163,11 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     private void onConnected(GoogleSignInAccount googleSignInAccount) {   
         achievementsClient = Games.getAchievementsClient(cordova.getActivity(), googleSignInAccount);
         leaderboardsClient = Games.getLeaderboardsClient(cordova.getActivity(), googleSignInAccount);
-        eventsClient = Games.getEventsClient(cordova.getActivity(), googleSignInAccount);
+        // @TODO: Will implement this later
+        // eventsClient = Games.getEventsClient(cordova.getActivity(), googleSignInAccount);
         playersClient = Games.getPlayersClient(cordova.getActivity(), googleSignInAccount);
     
-        // Show sign-out button on main menu
-        // mMainMenuFragment.setShowSignInButton(false);
-    
-        // Show "you are signed in" message on win screen, with no sign in button.
-        // mWinFragment.setShowSignInButton(false);
+        signedIn = true;
     
         // Set the greeting appropriately on main menu
         playersClient.getCurrentPlayer()
@@ -182,33 +176,59 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
               public void onComplete(@NonNull Task<Player> task) {
                 if (task.isSuccessful()) {
                   displayName = task.getResult().getDisplayName();
+                  sendResult(true, "GOOGLE_PLAYERNAME_RECEIVED", connectionCallbackContext); 
                 } else {
                   displayName = "???";
               }
             }
         });
-    
-    
-        // if we have accomplishments to push, push them
-        // if (!mOutbox.isEmpty()) {
-        //   pushAccomplishments();
-        //   Toast.makeText(this, getString(R.string.your_progress_will_be_uploaded),
-        //       Toast.LENGTH_LONG).show();
-        // }
     }
 
     private void onDisconnected() {    
         achievementsClient = null;
         leaderboardsClient = null;
         playersClient = null;
-    
-        // // Show sign-in button on main menu
-        // mMainMenuFragment.setShowSignInButton(true);
-    
-        // // Show sign-in button on win screen
-        // mWinFragment.setShowSignInButton(true);
-    
-        // mMainMenuFragment.setGreeting(getString(R.string.signed_out_greeting));
     }
     
+    public void onShowAchievementsRequested(CallbackContext callbackContext) {
+      achievementsClient.getAchievementsIntent()
+          .addOnSuccessListener(new OnSuccessListener<Intent>() {
+            @Override
+            public void onSuccess(Intent intent) {
+              cordova.getActivity().startActivityForResult(intent, RC_UNUSED);
+              sendResult(true, "Showing Achievements", callbackContext);
+            }
+          })
+          .addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+              sendResult(false, "Error Showing Achievements", callbackContext);
+            }
+          });
+    }
+
+    public void onShowLeaderboardsRequested(CallbackContext callbackContext) {
+      leaderboardsClient.getAllLeaderboardsIntent()
+          .addOnSuccessListener(new OnSuccessListener<Intent>() {
+            @Override
+            public void onSuccess(Intent intent) {
+              cordova.getActivity().startActivityForResult(intent, RC_LEADERBOARD_UI);
+              sendResult(true, "Showing All Leaderboards", callbackContext);
+            }
+          })
+          .addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+              sendResult(false, "Error Showing All Leaderboards", callbackContext);
+            }
+          });
+    }
+
+    public void onSubmitScore(String scoreBoard, Integer score, CallbackContext callbackContext) {
+        leaderboardsClient.submitScore(scoreBoard, score);
+    }
+
+    public void onUnlockAchievement(String achievementId, CallbackContext callbackContext) {
+        achievementsClient.unlock(achievementId);
+    }
 }

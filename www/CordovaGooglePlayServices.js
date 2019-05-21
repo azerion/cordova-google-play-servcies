@@ -381,7 +381,14 @@
             return _super.call(this) || this;
         }
         GooglePlayServices.prototype.login = function () {
-            return this.promisfyCordovaCall('CordovaGooglePlayServices', 'login');
+            var _this = this;
+            cordova.exec(function (result) {
+                console.log('Cordova connection event: ', result);
+                _this.emit('EVENT', result);
+            }, function (error) {
+                console.log('Cordova connectrion error: ', error);
+                _this.emit('ERROR', error);
+            }, 'CordovaGooglePlayServices', 'login', [{}]);
         };
         GooglePlayServices.prototype.submitScore = function (leaderBoardId, score) {
             return this.promisfyCordovaCall('CordovaGooglePlayServices', 'submitScore', [{
@@ -406,6 +413,7 @@
             return this.promisfyCordovaCall('CordovaGooglePlayServices', 'getDisplayName');
         };
         GooglePlayServices.prototype.promisfyCordovaCall = function (service, action, data) {
+            if (data === void 0) { data = [{}]; }
             console.log('setting up new promis!', service, action, data);
             return new Promise(function (resolve, reject) {
                 cordova.exec(function (result) {

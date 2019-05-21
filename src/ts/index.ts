@@ -11,8 +11,18 @@ class GooglePlayServices extends EventEmitter {
         super();
     }
 
-    public login(): Promise<boolean> {
-        return this.promisfyCordovaCall('CordovaGooglePlayServices', 'login');
+    public login(): void{
+        cordova.exec(
+            (result: any) => {
+                console.log('Cordova connection event: ', result);
+                this.emit('EVENT', result);
+            },
+            (error: any) => {
+                console.log('Cordova connectrion error: ', error);
+                this.emit('ERROR', error);
+            },
+            'CordovaGooglePlayServices', 'login', [{}]
+        );
     }
 
     public submitScore(leaderBoardId: string, score: number): Promise<any> {
@@ -42,7 +52,7 @@ class GooglePlayServices extends EventEmitter {
         return this.promisfyCordovaCall('CordovaGooglePlayServices', 'getDisplayName');
     }
 
-    private promisfyCordovaCall(service: string, action: string, data?: [GooglePlayData]): Promise<any> {
+    private promisfyCordovaCall(service: string, action: string, data: [GooglePlayData] = [{}]): Promise<any> {
         console.log('setting up new promis!', service, action, data);
         return new Promise((resolve, reject) => {
             cordova.exec(
