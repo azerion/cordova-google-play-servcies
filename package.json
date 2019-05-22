@@ -1,6 +1,6 @@
 {
   "name": "@azerion/cordova-plugin-google-play-services",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "description": "Cordova wrapper fo Google Play Services",
   "cordova": {
     "id": "cordova-plugin-google-play-services",
@@ -20,6 +20,7 @@
       "email": "a.bles@azerion.com"
     }
   ],
+  "types": "./types/index.d.ts",
   "license": "MIT",
   "bugs": "https://github.com/azerion/cordova-google-play-servcies/issues",
   "homepage": "https://github.com/azerion/cordova-google-play-servcies#README.md",
