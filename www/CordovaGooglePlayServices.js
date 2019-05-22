@@ -454,10 +454,6 @@
             }
         };
         Logger.log = function (level, data) {
-            console.log([
-                '[' + ((Date.now() - Logger.started) / 1000) + 's] CordovaGooglePlay | ' + LogLevel[level] + ' | '
-            ].concat(data));
-            // @ts-ignore
             console.log.apply(console, [
                 '[' + ((Date.now() - Logger.started) / 1000) + 's] CordovaGooglePlay | ' + LogLevel[level] + ' | '
             ].concat(data));
@@ -476,20 +472,28 @@
             if (_this.debug) {
                 Logger.setLogLevel(LogLevel.DEBUG);
             }
-            return _this;
-        }
-        GooglePlayServices.prototype.login = function () {
-            var _this = this;
             cordova.exec(function (result) {
                 Logger.d('Cordova connection event: ', result);
                 _this.emit('EVENT', result);
             }, function (error) {
                 Logger.d('Cordova connection error: ', error);
                 _this.emit('ERROR', error);
+            }, 'CordovaGooglePlayServices', 'initialize', [{ debug: debug }]);
+            return _this;
+        }
+        GooglePlayServices.prototype.login = function () {
+            var _this = this;
+            cordova.exec(function (result) {
+                Logger.d('Cordova login event: ', result);
+                _this.emit('EVENT', result);
+            }, function (error) {
+                Logger.d('Cordova login error: ', error);
+                _this.emit('ERROR', error);
             }, 'CordovaGooglePlayServices', 'login', [{}]);
         };
         GooglePlayServices.prototype.isSignedIn = function () {
             return this.promisfyCordovaCall('CordovaGooglePlayServices', 'isSignedIn').then(function (result) {
+                Logger.d("Checking if player signed in: ", result);
                 return result === "true";
             });
         };
@@ -517,7 +521,7 @@
         };
         GooglePlayServices.prototype.promisfyCordovaCall = function (service, action, data) {
             if (data === void 0) { data = [{}]; }
-            console.log('setting up new promis!', service, action, data);
+            Logger.d('setting up new Cordova promise!', service, action, data);
             return new Promise(function (resolve, reject) {
                 cordova.exec(function (result) {
                     Logger.d('Cordova Promise Result', result);
@@ -530,10 +534,8 @@
         };
         return GooglePlayServices;
     }(eventemitter3));
-    (function (Azerion) {
-        Azerion.playServices = new GooglePlayServices(true);
-    })(exports.Azerion || (exports.Azerion = {}));
-    window.cpgps = exports.Azerion.playServices;
+
+    exports.GooglePlayServices = GooglePlayServices;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

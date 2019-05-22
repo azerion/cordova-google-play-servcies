@@ -7,7 +7,7 @@ interface GooglePlayData {
     leaderBoardId?: string;
 }
 
-class GooglePlayServices extends EventEmitter {
+export class GooglePlayServices extends EventEmitter {
     private debug: boolean;
 
     public constructor(debug: boolean = false) {
@@ -18,9 +18,7 @@ class GooglePlayServices extends EventEmitter {
         if (this.debug) {
             Logger.setLogLevel(LogLevel.DEBUG);
         }
-    }
 
-    public login(): void {
         cordova.exec(
             (result: any) => {
                 Logger.d('Cordova connection event: ', result);
@@ -30,12 +28,27 @@ class GooglePlayServices extends EventEmitter {
                 Logger.d('Cordova connection error: ', error);
                 this.emit('ERROR', error);
             },
+            'CordovaGooglePlayServices', 'initialize', [{debug}]
+        );
+    }
+
+    public login(): void {
+        cordova.exec(
+            (result: any) => {
+                Logger.d('Cordova login event: ', result);
+                this.emit('EVENT', result);
+            },
+            (error: any) => {
+                Logger.d('Cordova login error: ', error);
+                this.emit('ERROR', error);
+            },
             'CordovaGooglePlayServices', 'login', [{}]
         );
     }
 
     public isSignedIn(): Promise<boolean> {
         return this.promisfyCordovaCall('CordovaGooglePlayServices', 'isSignedIn').then((result: string) => {
+            Logger.d("Checking if player signed in: ", result);
             return result === "true";
         });
     }
@@ -68,7 +81,7 @@ class GooglePlayServices extends EventEmitter {
     }
 
     private promisfyCordovaCall(service: string, action: string, data: [GooglePlayData] = [{}]): Promise<any> {
-        console.log('setting up new promis!', service, action, data);
+        Logger.d('setting up new Cordova promise!', service, action, data);
         return new Promise((resolve, reject) => {
             cordova.exec(
                 (result: any) => {
@@ -85,9 +98,3 @@ class GooglePlayServices extends EventEmitter {
         });
     }
 }
-
-export namespace Azerion {
-    export const playServices = new GooglePlayServices(true);
-}
-
-(window as any).cpgps = Azerion.playServices;

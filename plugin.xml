@@ -9,8 +9,8 @@
 
     <dependency id="es6-promise-plugin" version="^4.2.2" />
 
-    <js-module name="GooglePlayServices" src="www/CordovaGooglePlayServices.js">
-        <clobbers target="window.GooglePlayServices"/>
+    <js-module name="Azerion" src="www/CordovaGooglePlayServices.js">
+        <clobbers target="window.Azerion"/>
     </js-module>
 
     <platform name="android">

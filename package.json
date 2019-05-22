@@ -1,5 +1,5 @@
 {
-  "name": "cordova-plugin-google-play-services",
+  "name": "@azerion/cordova-plugin-google-play-services",
   "version": "0.0.7",
   "description": "Cordova wrapper fo Google Play Services",
   "cordova": {

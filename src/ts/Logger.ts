@@ -68,13 +68,9 @@ export class Logger {
     }
 
     private static log(level: LogLevel, data: any[]): void {
-        console.log([
-            '[' + ((Date.now() - Logger.started) / 1000) + 's] CordovaGooglePlay | '+ LogLevel[level] +' | '
-        ].concat(data));
-        // @ts-ignore
         console.log.apply(console, [
             '[' + ((Date.now() - Logger.started) / 1000) + 's] CordovaGooglePlay | '+ LogLevel[level] +' | '
-        ].concat(data));
+        ].concat(data) as [any]);
     }
 }
 

@@ -80,7 +80,10 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
             return false;
         }
 
-        if ("login".equals(action)) {
+        if ("initialize".equals(action)) {
+            connectionCallbackContext = callbackContext;
+            return true;
+        } else if ("login".equals(action)) {
             startSignInIntent(callbackContext);
             return true;
         } else if ("submitScore".equals(action)) {
@@ -133,7 +136,6 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
      * Simple sign-in with UI to notify user which account to use
      */
     private void startSignInIntent(CallbackContext callbackContext) {
-        connectionCallbackContext = callbackContext;
         LOG.d(LOG_TAG, "Starting Play Services signin intent");
         cordova.setActivityResultCallback(this);
         cordova.startActivityForResult(this, googleSignInClient.getSignInIntent(), RC_SIGN_IN);
@@ -251,16 +253,29 @@ public class CordovaGooglePlayServices extends CordovaPlugin {
     }
 
     public void onSubmitScore(String scoreBoard, Integer score, CallbackContext callbackContext) {
-        if (signedIn) {
-            LOG.d(LOG_TAG, "Submitting Score: " + score.toString() + " to: " + scoreBoard);
-            leaderboardsClient.submitScore(scoreBoard, score);
+        if (!signedIn) {
+            LOG.d(LOG_TAG, "Submitting Score failed: " + score.toString() + " to: " + scoreBoard);
+            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Score not submitted, player not signed in");
+            callbackContext.sendPluginResult(result);
+            return;
         }
+
+        LOG.d(LOG_TAG, "Submitting Score: " + score.toString() + " to: " + scoreBoard);
+        PluginResult result = new PluginResult(PluginResult.Status.OK, "Score submitted");
+        callbackContext.sendPluginResult(result);
+        leaderboardsClient.submitScore(scoreBoard, score);
     }
 
     public void onUnlockAchievement(String achievementId, CallbackContext callbackContext) {
-        if (signedIn) {
-            LOG.d(LOG_TAG, "Unlocking achievement: " + achievementId);
-            achievementsClient.unlock(achievementId);
+        if (!signedIn) {
+            LOG.d(LOG_TAG, "Unlocking achievement failed: " + achievementId);
+            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Achievement not submitted, player not signed in");
+            callbackContext.sendPluginResult(result);
+            return;
         }
+        LOG.d(LOG_TAG, "Unlocking achievement: " + achievementId);
+        PluginResult result = new PluginResult(PluginResult.Status.OK, "Achievement submitted");
+        callbackContext.sendPluginResult(result);
+        achievementsClient.unlock(achievementId);
     }
 }
