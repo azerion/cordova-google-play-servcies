@@ -51,7 +51,7 @@ social.showAchievements();
 F.A.Q.
 ------
 ### But why?
-There where some libraries, but they where out-dated, this cordova plugin supports google play services version 17:+
+There are some libraries, but they are out-dated, this cordova plugin supports google play services version 17:+
 
 Disclaimer
 ----------
